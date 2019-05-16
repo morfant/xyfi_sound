@@ -73,6 +73,7 @@ server.listen(port, '0.0.0.0', function onStart(err) {
 
 var screens = io.of('/screens');
 var remotes = io.of('/remotes');
+var unity = io.of('/unity');
 
 remotes.on('connection', function (remote) {
   screens.emit('push', remote.id);
@@ -83,7 +84,9 @@ remotes.on('connection', function (remote) {
   });
 
   remote.on('position', function (position) {
+    // unity.emit('position', position);
     screens.emit('position', remote.id, position);
+    sendPosition(remote.id, position);
   });
 });
 
@@ -93,3 +96,78 @@ screens.on('connection', function (socket) {
     address: `${ip.address()}:${port}`
   });
 });
+
+unity.on('connection', function (socket) {
+  console.log("Unity connected");
+
+  // socket.emit('initUnity', "Hello unity!");
+
+  // unity.on('woot', function (pos) {
+  //   console.log(pos);
+  // });
+
+  // console.log("Emit pos to unity");
+  // socket.emit('position', position);
+
+
+});
+
+
+var osc = require("osc");
+
+var udpPort = new osc.UDPPort({
+    // This is the port we're listening on.
+    localAddress: "localhost",
+    localPort: 9000,
+
+    // This is where sclang is listening for OSC messages.
+    remoteAddress: "localhost",
+    remotePort: 9001,
+    metadata: true
+});
+
+// Open the socket.
+udpPort.open();
+
+function sendPosition(remoteId, position) {
+    var msg = {
+        address: "/unity/pointing",
+        args: [
+            {
+                type: "s",
+                value: remoteId.split('#')[1] // /remote#ABCD!@#$ ==> ABCD!@#$
+            },
+            {
+                type: "f",
+                value: position[0] 
+            },
+            {
+                type: "f",
+                value: position[1] 
+            }
+        ]
+    };
+
+    console.log("Sending message", msg.address, msg.args, "to", udpPort.options.remoteAddress + ":" + udpPort.options.remotePort);
+    udpPort.send(msg);
+}
+
+// // Every second, send an OSC message to SuperCollider
+// setInterval(function() {
+//     var msg = {
+//         address: "/hello/from/oscjs",
+//         args: [
+//             {
+//                 type: "f",
+//                 value: Math.random()
+//             },
+//             {
+//                 type: "f",
+//                 value: Math.random()
+//             }
+//         ]
+//     };
+
+//     console.log("Sending message", msg.address, msg.args, "to", udpPort.options.remoteAddress + ":" + udpPort.options.remotePort);
+//     udpPort.send(msg);
+// }, 1000);

@@ -18,9 +18,10 @@
     "start": "node server"
   },
   "dependencies": {
-    "socket.io": "^2.0.3",
+    "socket.io": "^1.7.4",
     "socket.io-client": "^1.4.6",
-    "tone": "^13.4.9"
+    "tone": "^13.4.9",
+    "osc": "2.2.0"
   },
   "devDependencies": {
     "ip": "^1.1.5",

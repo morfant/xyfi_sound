@@ -39,6 +39,8 @@ io.once('initialize', firstConnected)
     remotes[id] = remotes[id] || {};
     remotes[id].x = position[0];
     remotes[id].y = position[1];
+    // console.log(position[0]);
+    // console.log(position[1]);
     requestUpdate();
   });
 
