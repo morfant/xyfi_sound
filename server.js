@@ -73,7 +73,6 @@ server.listen(port, '0.0.0.0', function onStart(err) {
 
 var screens = io.of('/screens');
 var remotes = io.of('/remotes');
-var unity = io.of('/unity');
 
 remotes.on('connection', function (remote) {
   screens.emit('push', remote.id);
@@ -84,9 +83,8 @@ remotes.on('connection', function (remote) {
   });
 
   remote.on('position', function (position) {
-    // unity.emit('position', position);
     screens.emit('position', remote.id, position);
-    sendPosition(remote.id, position);
+    sendPosition(remote.id, position); // send position data to Unity via OSC
   });
 });
 
@@ -97,21 +95,6 @@ screens.on('connection', function (socket) {
   });
 });
 
-unity.on('connection', function (socket) {
-  console.log("Unity connected");
-
-  // socket.emit('initUnity', "Hello unity!");
-
-  // unity.on('woot', function (pos) {
-  //   console.log(pos);
-  // });
-
-  // console.log("Emit pos to unity");
-  // socket.emit('position', position);
-
-
-});
-
 
 var osc = require("osc");
 
@@ -120,7 +103,7 @@ var udpPort = new osc.UDPPort({
     localAddress: "localhost",
     localPort: 9000,
 
-    // This is where sclang is listening for OSC messages.
+    // This is where Unity is listening for OSC messages.
     remoteAddress: "localhost",
     remotePort: 9001,
     metadata: true
@@ -152,22 +135,4 @@ function sendPosition(remoteId, position) {
     udpPort.send(msg);
 }
 
-// // Every second, send an OSC message to SuperCollider
-// setInterval(function() {
-//     var msg = {
-//         address: "/hello/from/oscjs",
-//         args: [
-//             {
-//                 type: "f",
-//                 value: Math.random()
-//             },
-//             {
-//                 type: "f",
-//                 value: Math.random()
-//             }
-//         ]
-//     };
 
-//     console.log("Sending message", msg.address, msg.args, "to", udpPort.options.remoteAddress + ":" + udpPort.options.remotePort);
-//     udpPort.send(msg);
-// }, 1000);
