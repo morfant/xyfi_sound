@@ -112,6 +112,20 @@ var udpPort = new osc.UDPPort({
 // Open the socket.
 udpPort.open();
 
+
+// Listen for incoming OSC bundles.
+udpPort.on("message", function (oscMsg) {
+//    console.log("An OSC message just arrived!", oscMsg);
+    if (oscMsg.address === "/pointingInUnity") {
+        var id = oscMsg.args[0].value;
+        var tag = oscMsg.args[1].value;
+
+        console.log(id);
+        console.log(tag);
+    }
+});
+
+
 function sendPosition(remoteId, position) {
     var msg = {
         address: "/unity/pointing",
@@ -131,7 +145,7 @@ function sendPosition(remoteId, position) {
         ]
     };
 
-    console.log("Sending message", msg.address, msg.args, "to", udpPort.options.remoteAddress + ":" + udpPort.options.remotePort);
+//    console.log("Sending message", msg.address, msg.args, "to", udpPort.options.remoteAddress + ":" + udpPort.options.remotePort);
     udpPort.send(msg);
 }
 
