@@ -26,10 +26,12 @@ var loopUpdateTimer,
   position = [],
   latestAlpha,
   baseAlpha = null,
-  touching = false;
+  touching = false,
+  touching2 = false;
 
 // Convert the phone's gyro data into screen coordinates.
 function handleDeviceOrientation(data) {
+
   var x, y,
     alpha = latestAlpha = data.alpha,
     beta = data.beta;
@@ -80,12 +82,27 @@ function handleDeviceOrientation(data) {
 }
 
 function handleTouchStartEvent(e) {
-  e.preventDefault();
 
-  // Every time we touch and hold we calibrate to the center of the screen.
-  baseAlpha = latestAlpha;
-  touching = true;
-  update();
+  var c = document.getElementById("connect");
+
+
+  e.preventDefault();
+  // console.log(e);
+
+  if (!touching) {
+    // Every time we touch and hold we calibrate to the center of the screen.
+    baseAlpha = latestAlpha;
+    touching = true;
+    update();
+
+  } else {
+
+    console.log("Touch2!!");
+    touching2 = true;
+
+    var con = document.getElementById("debug");
+    con.innerHTML = "TOUCH2!!";
+  }
 }
 
 function handleTouchEndEvent(e) {
@@ -93,12 +110,24 @@ function handleTouchEndEvent(e) {
   touching = false;
 
   // make sound on mobile test
-  var pos = document.getElementById("pos");
-  pos.innerHTML = position;
+  // var pos = document.getElementById("pos");
+  // pos.innerHTML = position;
 
-  var synth = new Tone.Synth().toMaster();
-  synth.triggerAttackRelease(Math.abs(position[0]*500), "8n");
+  // var synth = new Tone.Synth().toMaster();
+  // synth.triggerAttackRelease(Math.abs(position[0]*500), "8n");
 }
+
+function getName(e) {
+  console.log("getName()")
+
+}
+
+function handleTouchesEvent(e) {
+  e.preventDefault();
+
+
+}
+
 
 function update() {
   if (touching) {
@@ -106,6 +135,13 @@ function update() {
     loopUpdateTimer = setTimeout(update, 15);
   }
 }
+
+console.log($('#connect'));
+
+$('#connect button').on("click", function() {
+  console.log("CCC");
+})
+
 
 // We need to check for DeviceOrientation support because some devices do not
 // support it. For example, phones with no gyro.
@@ -135,6 +171,7 @@ if (window.DeviceOrientationEvent) {
       passive: false
     }
   );
+
 } else {
   alert('This device is not supported.');
 }
