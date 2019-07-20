@@ -141,7 +141,7 @@ function sendTouching(remoteId, touching) {
                 value: remoteId.split('#')[1] // /remote#ABCD!@#$ ==> ABCD!@#$
             },
             {
-                type: "s",
+                type: "s", // send boolean as string
                 value: touching 
             }
         ]
