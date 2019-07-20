@@ -22,12 +22,10 @@ var io = require('socket.io-client')('/remotes');
 var MAX_X_ANGLE = 20,
   MAX_Y_ANGLE = 24;
 
-var loopUpdateTimer,
-  position = [],
+var position = [],
   latestAlpha,
   baseAlpha = null,
-  touching = false,
-  touching2 = false;
+  touching = false;
 
 
 var buttonToggle = false;
@@ -83,7 +81,10 @@ function handleDeviceOrientation(data) {
 
   position[0] = x;
   position[1] = y;
+
 }
+
+/*
 
 function handleTouchStartEvent(e) {
 
@@ -111,35 +112,35 @@ function handleTouchEndEvent(e) {
   // synth.triggerAttackRelease(Math.abs(position[0]*500), "8n");
 }
 
+*/
+
 
 function update() {
-  if (touching) {
+  if (buttonToggle) {
     io.emit('position', position);
-    // loopUpdateTimer = setTimeout(update, 15);
   }
 }
 
 $('#connect').on('click touch', function() {
   if (buttonToggle === false) {
     buttonToggle = true;
+
     $('#connect').removeClass("btn-primary")
     $('#connect').addClass("btn-success")
-
-    touching = true;
-    t();
+    $('#connect').html("Pointing On")
+    togglePointing();
 
   } else {
     buttonToggle = false;
     $('#connect').removeClass("btn-success")
     $('#connect').addClass("btn-primary")
+    $('#connect').html("Connect")
 
-    touching = false;
   }
 
-  console.log(buttonToggle)
 })
 
-function t (){
+function togglePointing () {
   baseAlpha = latestAlpha;
 
   intervalLoop = setInterval(function() {
@@ -151,7 +152,7 @@ function t (){
       clearInterval(intervalLoop)
     }
 
-  }, 50);
+  }, 50); // update rate
 
 }
 

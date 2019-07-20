@@ -84,8 +84,8 @@ remotes.on('connection', function (remote) {
 
   remote.on('position', function (position) {
     screens.emit('position', remote.id, position);
-    console.log(position);
-    // sendPosition(remote.id, position); // send position data to Unity via OSC
+    // console.log(position);
+    sendPosition(remote.id, position); // send position data to Unity via OSC
   });
 });
 
