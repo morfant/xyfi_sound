@@ -87,6 +87,11 @@ remotes.on('connection', function (remote) {
     // console.log(position);
     sendPosition(remote.id, position); // send position data to Unity via OSC
   });
+
+  remote.on('touching', function (touching) {
+    console.log(touching);
+    sendTouching(remote.id, touching); // send touching data to Unity via OSC
+  });
 });
 
 screens.on('connection', function (socket) {
@@ -125,6 +130,26 @@ udpPort.on("message", function (oscMsg) {
         console.log(tag);
     }
 });
+
+
+function sendTouching(remoteId, touching) {
+    var msg = {
+        address: "/unity/touching",
+        args: [
+            {
+                type: "s",
+                value: remoteId.split('#')[1] // /remote#ABCD!@#$ ==> ABCD!@#$
+            },
+            {
+                type: "s",
+                value: touching 
+            }
+        ]
+    };
+
+    udpPort.send(msg);
+}
+
 
 
 function sendPosition(remoteId, position) {

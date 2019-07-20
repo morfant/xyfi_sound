@@ -84,25 +84,51 @@ function handleDeviceOrientation(data) {
 
 }
 
-/*
 
 function handleTouchStartEvent(e) {
 
   e.preventDefault();
-  // console.log(e);
+  // console.log(e.target.id);
 
-  if (!touching) {
-    // Every time we touch and hold we calibrate to the center of the screen.
-    baseAlpha = latestAlpha;
-    touching = true;
-    update();
+  if (e.target.id === "bigTouch") {
+    if (!touching){
+      touching = true
+      io.emit('touching', touching);
+      $('#bigTouch').addClass("touching")
+    }
+  } else if (e.target.id === "connect") {
+    if (buttonToggle === false) {
+      buttonToggle = true
+
+      $('#connect').removeClass("btn-primary")
+      $('#connect').addClass("btn-success")
+      $('#connect').html("Pointing On")
+      togglePointing()
+
+    } else {
+      buttonToggle = false
+      $('#connect').removeClass("btn-success")
+      $('#connect').addClass("btn-primary")
+      $('#connect').html("Connect")
+
+    }
   }
 
 }
 
 function handleTouchEndEvent(e) {
   e.preventDefault();
-  touching = false;
+
+  console.log("touch end")
+  console.log(e.target.id)
+
+  if (e.target.id === "bigTouch") {
+    touching = false;
+    io.emit('touching', touching);
+    $('#bigTouch').removeClass("touching")
+  } else if (e.target.id == "connect") {
+
+  }
 
   // make sound on mobile test
   // var pos = document.getElementById("pos");
@@ -112,8 +138,6 @@ function handleTouchEndEvent(e) {
   // synth.triggerAttackRelease(Math.abs(position[0]*500), "8n");
 }
 
-*/
-
 
 function update() {
   if (buttonToggle) {
@@ -121,17 +145,18 @@ function update() {
   }
 }
 
+/*
 $('#connect').on('click touch', function() {
   if (buttonToggle === false) {
-    buttonToggle = true;
+    buttonToggle = true
 
     $('#connect').removeClass("btn-primary")
     $('#connect').addClass("btn-success")
     $('#connect').html("Pointing On")
-    togglePointing();
+    togglePointing()
 
   } else {
-    buttonToggle = false;
+    buttonToggle = false
     $('#connect').removeClass("btn-success")
     $('#connect').addClass("btn-primary")
     $('#connect').html("Connect")
@@ -139,6 +164,7 @@ $('#connect').on('click touch', function() {
   }
 
 })
+*/
 
 function togglePointing () {
   baseAlpha = latestAlpha;
@@ -164,11 +190,11 @@ function togglePointing () {
 if (window.DeviceOrientationEvent) {
   window.addEventListener('deviceorientation', handleDeviceOrientation, false);
 
-  // window.addEventListener('touchstart', handleTouchStartEvent, {
-  //     capture: true,
-  //     passive: false
-  //   }
-  // );
+  window.addEventListener('touchstart', handleTouchStartEvent, {
+      capture: true,
+      passive: false
+    }
+  );
 
   window.addEventListener('mousedown', handleTouchStartEvent, {
       capture: true,
@@ -176,11 +202,11 @@ if (window.DeviceOrientationEvent) {
     }
   );
 
-  // window.addEventListener('touchend', handleTouchEndEvent, {
-  //     capture: true,
-  //     passive: false
-  //   }
-  // );
+  window.addEventListener('touchend', handleTouchEndEvent, {
+      capture: true,
+      passive: false
+    }
+  );
 
   window.addEventListener('mouseup', handleTouchEndEvent, {
       capture: true,

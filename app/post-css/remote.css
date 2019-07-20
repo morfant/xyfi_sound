@@ -16,6 +16,7 @@
 /* cssnext: CSS variables */
 :root {
   --mainColor: rebeccapurple;
+  --touchColor: cadetblue;
 }
 
 html, body {
@@ -39,4 +40,8 @@ body {
     max-width: 400px;
     text-align: center;
   }
+}
+
+.touching {
+  background: var(--touchColor)
 }
