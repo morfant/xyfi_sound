@@ -29,6 +29,10 @@ var loopUpdateTimer,
   touching = false,
   touching2 = false;
 
+
+var buttonToggle = false;
+var intervalLoop = null;
+
 // Convert the phone's gyro data into screen coordinates.
 function handleDeviceOrientation(data) {
 
@@ -83,9 +87,6 @@ function handleDeviceOrientation(data) {
 
 function handleTouchStartEvent(e) {
 
-  var c = document.getElementById("connect");
-
-
   e.preventDefault();
   // console.log(e);
 
@@ -94,15 +95,8 @@ function handleTouchStartEvent(e) {
     baseAlpha = latestAlpha;
     touching = true;
     update();
-
-  } else {
-
-    console.log("Touch2!!");
-    touching2 = true;
-
-    var con = document.getElementById("debug");
-    con.innerHTML = "TOUCH2!!";
   }
+
 }
 
 function handleTouchEndEvent(e) {
@@ -117,30 +111,51 @@ function handleTouchEndEvent(e) {
   // synth.triggerAttackRelease(Math.abs(position[0]*500), "8n");
 }
 
-function getName(e) {
-  console.log("getName()")
-
-}
-
-function handleTouchesEvent(e) {
-  e.preventDefault();
-
-
-}
-
 
 function update() {
   if (touching) {
     io.emit('position', position);
-    loopUpdateTimer = setTimeout(update, 15);
+    // loopUpdateTimer = setTimeout(update, 15);
   }
 }
 
-console.log($('#connect'));
+$('#connect').on('click touch', function() {
+  if (buttonToggle === false) {
+    buttonToggle = true;
+    $('#connect').removeClass("btn-primary")
+    $('#connect').addClass("btn-success")
 
-$('#connect button').on("click", function() {
-  console.log("CCC");
+    touching = true;
+    t();
+
+  } else {
+    buttonToggle = false;
+    $('#connect').removeClass("btn-success")
+    $('#connect').addClass("btn-primary")
+
+    touching = false;
+  }
+
+  console.log(buttonToggle)
 })
+
+function t (){
+  baseAlpha = latestAlpha;
+
+  intervalLoop = setInterval(function() {
+
+    // console.log("update()")
+    update();
+
+    if (buttonToggle == false) {
+      clearInterval(intervalLoop)
+    }
+
+  }, 50);
+
+}
+
+
 
 
 // We need to check for DeviceOrientation support because some devices do not
@@ -148,11 +163,11 @@ $('#connect button').on("click", function() {
 if (window.DeviceOrientationEvent) {
   window.addEventListener('deviceorientation', handleDeviceOrientation, false);
 
-  window.addEventListener('touchstart', handleTouchStartEvent, {
-      capture: true,
-      passive: false
-    }
-  );
+  // window.addEventListener('touchstart', handleTouchStartEvent, {
+  //     capture: true,
+  //     passive: false
+  //   }
+  // );
 
   window.addEventListener('mousedown', handleTouchStartEvent, {
       capture: true,
@@ -160,11 +175,11 @@ if (window.DeviceOrientationEvent) {
     }
   );
 
-  window.addEventListener('touchend', handleTouchEndEvent, {
-      capture: true,
-      passive: false
-    }
-  );
+  // window.addEventListener('touchend', handleTouchEndEvent, {
+  //     capture: true,
+  //     passive: false
+  //   }
+  // );
 
   window.addEventListener('mouseup', handleTouchEndEvent, {
       capture: true,
