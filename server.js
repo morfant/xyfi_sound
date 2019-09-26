@@ -36,8 +36,17 @@ const middleware = webpackMiddleware(compiler, {
     poll: true
   },
 });
-const http = require('http');
-const server = http.createServer(app);
+// const http = require('http');
+const https = require('https');
+const fs = require('fs');
+
+const options = {
+  key: fs.readFileSync('key.pem'),
+  cert: fs.readFileSync('cert.pem')
+};
+
+// const server = http.createServer(app);
+const server = https.createServer(options, app);
 const io = require('socket.io')(server);
 
 app.use(middleware);
@@ -65,7 +74,7 @@ server.listen(port, '0.0.0.0', function onStart(err) {
     console.log(err);
   }
   console.info(
-    '==> 🌎 Listening on port %s. Open up http://0.0.0.0:%s/ in your browser.', 
+    '==> 🌎 Listening on port %s. Open up https://0.0.0.0:%s/ in your browser.', 
     port, 
     port
   );
@@ -84,7 +93,7 @@ remotes.on('connection', function (remote) {
 
   remote.on('position', function (position) {
     screens.emit('position', remote.id, position);
-    // console.log(position);
+    console.log(position);
     sendPosition(remote.id, position); // send position data to Unity via OSC
   });
 
@@ -92,6 +101,15 @@ remotes.on('connection', function (remote) {
     console.log(touching);
     sendTouching(remote.id, touching); // send touching data to Unity via OSC
   });
+
+  // remote.on('handling', function(data) {
+  //   console.log(data)
+  // })
+
+  remote.on('llog', function(str) {
+    console.log(str)
+  })
+
 });
 
 screens.on('connection', function (socket) {

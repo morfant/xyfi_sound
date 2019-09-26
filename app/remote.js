@@ -18,6 +18,9 @@ require('./post-css/remote.css');
 
 var io = require('socket.io-client')('/remotes');
 
+// import FULLTILT from '../fulltilt.js';
+// const GyroNorm = require('../gyronorm.js').GyroNorm;
+
 // The angle at which we stop listening for input from the phone's gyro.
 var MAX_X_ANGLE = 20,
   MAX_Y_ANGLE = 24;
@@ -31,8 +34,66 @@ var position = [],
 var buttonToggle = false;
 var intervalLoop = null;
 
+// Using gyronorm if you need
+/*
+var gn = new GyroNorm();
+gn.FULLTILT = FULLTILT;
+
+var args = {
+	frequency:50,					// ( How often the object sends the values - milliseconds )
+	gravityNormalized:true,			// ( If the gravity related values to be normalized )
+	orientationBase:GyroNorm.GAME,		// ( Can be GyroNorm.GAME or GyroNorm.WORLD. gn.GAME returns orientation values with respect to the head direction of the device. gn.WORLD returns the orientation values with respect to the actual north direction of the world. )
+	decimalCount:2,					// ( How many digits after the decimal point will there be in the return values )
+	logger:null,					// ( Function to be called to log messages from gyronorm.js )
+	screenAdjusted:false			// ( If set to true it will return screen adjusted values. )
+};
+
+gn.init().then(function(){
+  gn.start(function(data){
+    // Process:
+    console.log("gn start()")
+    var alpha, beta, gamma, abs, ax, ay, az, gx, gy, gz, rx, ry, rz;
+    alpha = data.do.alpha	// ( deviceorientation event alpha value )
+    beta = data.do.beta		// ( deviceorientation event beta value )
+    gamma = data.do.gamma	// ( deviceorientation event gamma value )
+    abs = data.do.absolute	// ( deviceorientation event absolute value )
+
+    ax = data.dm.x		//( devicemotion event acceleration x value )
+    ay = data.dm.y		//( devicemotion event acceleration y value )
+    az = data.dm.z		//( devicemotion event acceleration z value )
+
+    gx = data.dm.gx		//( devicemotion event accelerationIncludingGravity x value )
+    gy = data.dm.gy		//( devicemotion event accelerationIncludingGravity y value )
+    gz = data.dm.gz		//( devicemotion event accelerationIncludingGravity z value )
+
+    rx = data.dm.alpha //( devicemotion event rotationRate alpha value )
+    ry = data.dm.beta		//( devicemotion event rotationRate beta value )
+    rz = data.dm.gamma	//( devicemotion event rotationRate gamma value )
+
+    position[0] = alpha;
+    position[1] = beta;
+    position[2] = gamma;
+    position[3] = abs;
+    position[4] = ax;
+    position[5] = ay;
+    position[6] = az;
+    position[7] = gx;
+    position[8] = gy;
+    position[9] = gz;
+    position[10] = rx;
+    position[11] = ry;
+    position[12] = rz;
+  });
+}).catch(function(e){
+  // Catch if the DeviceOrientation or DeviceMotion is not supported by the browser or device
+});
+*/
+
 // Convert the phone's gyro data into screen coordinates.
 function handleDeviceOrientation(data) {
+
+  // console.log("handleDeviceOrientation()")
+  // io.emit('llog', "hello")
 
   var x, y,
     alpha = latestAlpha = data.alpha,
@@ -84,11 +145,15 @@ function handleDeviceOrientation(data) {
 
 }
 
+// function iologging(data) {
+//   io.emit('log', data)
+// }
+
 
 function handleTouchStartEvent(e) {
 
   e.preventDefault();
-  // console.log(e.target.id);
+  // io.emit('log', e)
 
   if (e.target.id === "bigTouch") {
     if (!touching){
@@ -118,9 +183,6 @@ function handleTouchStartEvent(e) {
 
 function handleTouchEndEvent(e) {
   e.preventDefault();
-
-  console.log("touch end")
-  console.log(e.target.id)
 
   if (e.target.id === "bigTouch") {
     touching = false;
@@ -171,7 +233,6 @@ function togglePointing () {
 
   intervalLoop = setInterval(function() {
 
-    // console.log("update()")
     update();
 
     if (buttonToggle == false) {
@@ -188,6 +249,8 @@ function togglePointing () {
 // We need to check for DeviceOrientation support because some devices do not
 // support it. For example, phones with no gyro.
 if (window.DeviceOrientationEvent) {
+
+  // *** It needs to be worked with HTTPS(not HTTP) server to access this event on IOS ***
   window.addEventListener('deviceorientation', handleDeviceOrientation, false);
 
   window.addEventListener('touchstart', handleTouchStartEvent, {

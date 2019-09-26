@@ -19,9 +19,9 @@
   },
   "dependencies": {
     "ajv": "^6.10.0",
+    "osc": "2.3.0",
     "socket.io": "^2.0.3",
-    "socket.io-client": "^1.4.6",
-    "osc": "2.3.0"
+    "socket.io-client": "^1.4.6"
   },
   "devDependencies": {
     "ip": "^1.1.5",
