@@ -24,7 +24,10 @@ const webpack = require('webpack');
 const webpackMiddleware = require('webpack-dev-middleware');
 const webpackHotMiddleware = require('webpack-hot-middleware');
 const config = require('./webpack.config.js');
-const port = 8080;
+const port = 8000;
+//const addr_unity = "localhost";
+const addr_unity = "175.223.20.24";
+
 const ip = require('ip');
 
 const app = express();
@@ -128,7 +131,7 @@ var udpPort = new osc.UDPPort({
     localPort: 9000,
 
     // This is where Unity is listening for OSC messages.
-    remoteAddress: "localhost",
+    remoteAddress: "175.223.20.24",
     remotePort: 9001,
     metadata: true
 });
@@ -189,7 +192,7 @@ function sendPosition(remoteId, position) {
         ]
     };
 
-//    console.log("Sending message", msg.address, msg.args, "to", udpPort.options.remoteAddress + ":" + udpPort.options.remotePort);
+    console.log("Sending message", msg.address, msg.args, "to", udpPort.options.remoteAddress + ":" + udpPort.options.remotePort);
     udpPort.send(msg);
 }
 
