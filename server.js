@@ -26,7 +26,7 @@ const webpackHotMiddleware = require('webpack-hot-middleware');
 const config = require('./webpack.config.js');
 const port = 8000;
 //const addr_unity = "localhost";
-const addr_unity = "175.223.20.24";
+const addr_unity = "183.96.170.53";
 
 const ip = require('ip');
 
@@ -131,7 +131,7 @@ var udpPort = new osc.UDPPort({
     localPort: 9000,
 
     // This is where Unity is listening for OSC messages.
-    remoteAddress: "175.223.20.24",
+    remoteAddress: addr_unity,
     remotePort: 9001,
     metadata: true
 });
