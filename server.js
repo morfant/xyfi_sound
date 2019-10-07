@@ -24,7 +24,15 @@ const webpack = require('webpack');
 const webpackMiddleware = require('webpack-dev-middleware');
 const webpackHotMiddleware = require('webpack-hot-middleware');
 const config = require('./webpack.config.js');
-const port = 8000;
+const port = 443;
+
+const dgram = require('dgram');
+const client = dgram.createSocket('udp4');
+const osc = require('osc');
+
+const HOST = '183.96.170.53';
+const PORT = 57120;
+//const port = 80;
 //const addr_unity = "localhost";
 const addr_unity = "183.96.170.53";
 
@@ -39,18 +47,24 @@ const middleware = webpackMiddleware(compiler, {
     poll: true
   },
 });
-// const http = require('http');
+
+//const http = require('http');
 const https = require('https');
 const fs = require('fs');
 
+
 const options = {
-  key: fs.readFileSync('key.pem'),
-  cert: fs.readFileSync('cert.pem')
+  key: fs.readFileSync('/etc/letsencrypt/live/hidden-protocol.xyz/privkey.pem'),
+  cert: fs.readFileSync('/etc/letsencrypt/live/hidden-protocol.xyz/cert.pem'),
+  ca: fs.readFileSync('/etc/letsencrypt/live/hidden-protocol.xyz/chain.pem')
 };
 
-// const server = http.createServer(app);
+
+
+//const server = http.createServer(app);
 const server = https.createServer(options, app);
 const io = require('socket.io')(server);
+
 
 app.use(middleware);
 app.use(webpackHotMiddleware(compiler));
@@ -59,8 +73,8 @@ app.use(webpackHotMiddleware(compiler));
 // a smartphone. 
 // This is usually where the main content of xyfi lives.
 app.get('/screen', function response(req, res) {
-  res.write(middleware.fileSystem.readFileSync(path.join(__dirname, 
-    'dist/screen.html')));
+	  res.write(middleware.fileSystem.readFileSync(path.join(__dirname, 
+	    'dist/screen.html')));
   res.end();
 });
 
@@ -94,6 +108,7 @@ remotes.on('connection', function (remote) {
     screens.emit('pop', remote.id);
   });
 
+	
   remote.on('position', function (position) {
     screens.emit('position', remote.id, position);
     console.log(position);
@@ -102,7 +117,8 @@ remotes.on('connection', function (remote) {
 
   remote.on('touching', function (touching) {
     console.log(touching);
-    sendTouching(remote.id, touching); // send touching data to Unity via OSC
+   //sendTouching(remote.id, touching); // send touching data to Unity via OSC
+	  send(remote.id, touching);
   });
 
   // remote.on('handling', function(data) {
@@ -123,8 +139,6 @@ screens.on('connection', function (socket) {
 });
 
 
-var osc = require("osc");
-
 var udpPort = new osc.UDPPort({
     // This is the port we're listening on.
     localAddress: "localhost",
@@ -132,13 +146,48 @@ var udpPort = new osc.UDPPort({
 
     // This is where Unity is listening for OSC messages.
     remoteAddress: addr_unity,
-    remotePort: 9001,
+    remotePort: 57120,
     metadata: true
 });
 
-// Open the socket.
-udpPort.open();
 
+
+let oscTouchMessage = function(remoteId, touching) {
+  var message = osc.writeMessage({
+      address: '/chat',
+      args: [
+          {
+              type: "s",
+              value: remoteId.split('#')[1] // /remote#ABCD!@#$ ==> ABCD!@#$
+          },
+          {
+              type: "s", // send boolean as string
+              value: touching 
+          }
+      ]
+    });
+
+  return Buffer.from(message);
+}
+
+
+let send = function(remoteId, touching) {
+	var m = oscTouchMessage(remoteId, touching);
+	console.log(m);
+  client.send(m, PORT, HOST, function(err, bytes) {
+    if(err) throw new Error(err);
+  })
+}
+
+// Open the socket.
+//udpPort.open();
+
+/*
+udpPort.on("ready", function () {
+	console.log("readY");
+	osc_ready = true;
+});
+*/
 
 // Listen for incoming OSC bundles.
 udpPort.on("message", function (oscMsg) {
@@ -155,7 +204,8 @@ udpPort.on("message", function (oscMsg) {
 
 function sendTouching(remoteId, touching) {
     var msg = {
-        address: "/unity/touching",
+        //address: "/unity/touching",
+        address: "/chat",
         args: [
             {
                 type: "s",
@@ -168,6 +218,7 @@ function sendTouching(remoteId, touching) {
         ]
     };
 
+	console.log("sendTouching()");
     udpPort.send(msg);
 }
 

@@ -46,7 +46,7 @@ io.once('initialize', firstConnected)
 
 // Initialize any cursors that that already joined.
 function firstConnected({remoteIDs=[],address=''}) {
-  addressDisplay.innerHTML = `http://${address}`;
+  addressDisplay.innerHTML = `https://${address}`;
   remotes = {};
   for (var i = 0; i < remoteIDs.length; i++) {
     remoteJoined(remoteIDs[i]);
