@@ -31,6 +31,7 @@ var position = [],
   touching = false;
 
 
+var loopUpdateTimer;
 var buttonToggle = false;
 var intervalLoop = null;
 
@@ -97,7 +98,9 @@ function handleDeviceOrientation(data) {
 
   var x, y,
     alpha = latestAlpha = data.alpha,
-    beta = data.beta;
+    beta = data.beta,
+    gamma = data.gamma,
+    abs = data.absolute;
 
   if (baseAlpha !== null) {
     alpha = alpha - baseAlpha;
@@ -142,6 +145,10 @@ function handleDeviceOrientation(data) {
 
   position[0] = x;
   position[1] = y;
+  // position[2] = alpha;
+  // position[3] = beta;
+  // position[4] = gamma;
+  // position[5] = absolute;
 
 }
 
@@ -149,48 +156,48 @@ function handleDeviceOrientation(data) {
 //   io.emit('log', data)
 // }
 
-
 function handleTouchStartEvent(e) {
 
   e.preventDefault();
   // io.emit('log', e)
 
-  if (e.target.id === "bigTouch") {
+  baseAlpha = latestAlpha;
+  // if (e.target.id === "bigTouch") {
     if (!touching){
       touching = true
       io.emit('touching', touching);
       $('#bigTouch').addClass("touching")
+      update();
     }
-  } else if (e.target.id === "connect") {
-    if (buttonToggle === false) {
-      buttonToggle = true
+  // } 
+  // else if (e.target.id === "connect") {
+  //   if (buttonToggle === false) {
+  //     buttonToggle = true
 
-      $('#connect').removeClass("btn-primary")
-      $('#connect').addClass("btn-success")
-      $('#connect').html("Pointing On")
-      togglePointing()
+  //     $('#connect').removeClass("btn-primary")
+  //     $('#connect').addClass("btn-success")
+  //     $('#connect').html("Pointing On")
+  //     togglePointing()
 
-    } else {
-      buttonToggle = false
-      $('#connect').removeClass("btn-success")
-      $('#connect').addClass("btn-primary")
-      $('#connect').html("Connect")
+  //   } else {
+  //     buttonToggle = false
+  //     $('#connect').removeClass("btn-success")
+  //     $('#connect').addClass("btn-primary")
+  //     $('#connect').html("Connect")
 
-    }
-  }
+  //   }
+  // }
 
 }
 
 function handleTouchEndEvent(e) {
   e.preventDefault();
 
-  if (e.target.id === "bigTouch") {
+  // if (e.target.id === "bigTouch") {
     touching = false;
     io.emit('touching', touching);
     $('#bigTouch').removeClass("touching")
-  } else if (e.target.id == "connect") {
-
-  }
+  // }
 
   // make sound on mobile test
   // var pos = document.getElementById("pos");
@@ -202,31 +209,13 @@ function handleTouchEndEvent(e) {
 
 
 function update() {
-  //if (buttonToggle) {
-    io.emit('position', position);
-  //}
+  // if (buttonToggle) {
+    if(touching) {
+      io.emit('position', position);
+      loopUpdateTimer = setTimeout(update, 15);
+    }
+  // }
 }
-
-/*
-$('#connect').on('click touch', function() {
-  if (buttonToggle === false) {
-    buttonToggle = true
-
-    $('#connect').removeClass("btn-primary")
-    $('#connect').addClass("btn-success")
-    $('#connect').html("Pointing On")
-    togglePointing()
-
-  } else {
-    buttonToggle = false
-    $('#connect').removeClass("btn-success")
-    $('#connect').addClass("btn-primary")
-    $('#connect').html("Connect")
-
-  }
-
-})
-*/
 
 function togglePointing () {
   baseAlpha = latestAlpha;
@@ -251,7 +240,9 @@ function togglePointing () {
 if (window.DeviceOrientationEvent) {
 
   // *** It needs to be worked with HTTPS(not HTTP) server to access this event on IOS ***
+
   window.addEventListener('deviceorientation', handleDeviceOrientation, false);
+  // window.addEventListener('deviceorientationabsolute', handleDeviceOrientation, false);
 
   window.addEventListener('touchstart', handleTouchStartEvent, {
       capture: true,

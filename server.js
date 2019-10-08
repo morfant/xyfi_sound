@@ -18,26 +18,25 @@
  * This server takes care of relaying rotation in formation from phone's gyro
  * to the larger screen. 
  */
+
+const ab2str = require('arraybuffer-to-string')
 const path = require('path');
 const express = require('express');
 const webpack = require('webpack');
 const webpackMiddleware = require('webpack-dev-middleware');
 const webpackHotMiddleware = require('webpack-hot-middleware');
 const config = require('./webpack.config.js');
+
+const aws = false;
 const port = 443;
 
+const osc = require('osc');
 const dgram = require('dgram');
 const client = dgram.createSocket('udp4');
-const osc = require('osc');
-
-const HOST = '183.96.170.53';
-const PORT = 9001;
-//const port = 80;
-//const addr_unity = "localhost";
-const addr_unity = "183.96.170.53";
 
 const ip = require('ip');
-
+const https = require('https');
+const fs = require('fs');
 const app = express();
 const compiler = webpack(config);
 const middleware = webpackMiddleware(compiler, {
@@ -48,20 +47,37 @@ const middleware = webpackMiddleware(compiler, {
   },
 });
 
-//const http = require('http');
-const https = require('https');
-const fs = require('fs');
+
+var HOST, PORT;
+
+if (aws) {
+  HOST = "183.96.170.53";
+  PORT = 9001;
+} else {
+  HOST = "localhost";
+  PORT = 9001;
+}
 
 
-const options = {
-  key: fs.readFileSync('/etc/letsencrypt/live/hidden-protocol.xyz/privkey.pem'),
-  cert: fs.readFileSync('/etc/letsencrypt/live/hidden-protocol.xyz/cert.pem'),
-  ca: fs.readFileSync('/etc/letsencrypt/live/hidden-protocol.xyz/chain.pem')
-};
+var options = {};
+
+if (aws) {
+  options = {
+    key: fs.readFileSync('/etc/letsencrypt/live/hidden-protocol.xyz/privkey.pem'),
+    cert: fs.readFileSync('/etc/letsencrypt/live/hidden-protocol.xyz/cert.pem'),
+    ca: fs.readFileSync('/etc/letsencrypt/live/hidden-protocol.xyz/chain.pem')
+  } 
+} else {
+  options = {
+    key: fs.readFileSync('hp-key.pem'),
+    cert: fs.readFileSync('hp-cert.pem'),
+  }
+}
 
 
+var remoteDevices = []
 
-//const server = http.createServer(app);
+
 const server = https.createServer(options, app);
 const io = require('socket.io')(server);
 
@@ -97,6 +113,14 @@ server.listen(port, '0.0.0.0', function onStart(err) {
   );
 });
 
+function arrayRemove(arr, value) {
+
+  return arr.filter(function(ele){
+      return ele != value;
+  });
+
+}
+
 var screens = io.of('/screens');
 var remotes = io.of('/remotes');
 
@@ -104,29 +128,32 @@ remotes.on('connection', function (remote) {
   screens.emit('push', remote.id);
   console.log('remote connected');
 
+  if (!remoteDevices[remote.id]) {
+    remoteDevices.push(remote.id)
+  }
+  console.log(remoteDevices)
+
   remote.once('disconnect', function () {
+    console.log('remote disconnected');
     screens.emit('pop', remote.id);
+    arrayRemove(remoteDevices, remote.id)
+    console.log(remoteDevices)
   });
 
   remote.on('position', function (position) {
-    console.log(position);
     screens.emit('position', remote.id, position);
-    sendPosition(remote.id, position); // send position data to Unity via OSC
+    console.log(position);
+    sendPos(remote.id, position) // send pos via OSC to unity
   });
 
   remote.on('touching', function (touching) {
     console.log(touching);
-   //sendTouching(remote.id, touching); // send touching data to Unity via OSC
-	  send(remote.id, touching);
+    sendTouch(remote.id, touching);  // send pos via OSC to unity
   });
 
-  // remote.on('handling', function(data) {
-  //   console.log(data)
+  // remote.on('log', function(str) {
+  //   console.log(str)
   // })
-
-  remote.on('llog', function(str) {
-    console.log(str)
-  })
 
 });
 
@@ -144,8 +171,8 @@ var udpPort = new osc.UDPPort({
     localPort: 9000,
 
     // This is where Unity is listening for OSC messages.
-    remoteAddress: addr_unity,
-    remotePort: 57120,
+    remoteAddress: HOST,
+    remotePort: PORT,
     metadata: true
 });
 
@@ -153,7 +180,7 @@ var udpPort = new osc.UDPPort({
 
 let oscTouchMessage = function(remoteId, touching) {
   var message = osc.writeMessage({
-      address: '/chat',
+      address: '/unity/touching',
       args: [
           {
               type: "s",
@@ -166,65 +193,11 @@ let oscTouchMessage = function(remoteId, touching) {
       ]
     });
 
-  return Buffer.from(message);
+    return Buffer.from(message);
 }
 
-
-let send = function(remoteId, touching) {
-	var m = oscTouchMessage(remoteId, touching);
-	console.log(m);
-  client.send(m, PORT, HOST, function(err, bytes) {
-    if(err) throw new Error(err);
-  })
-}
-
-// Open the socket.
-//udpPort.open();
-
-/*
-udpPort.on("ready", function () {
-	console.log("readY");
-	osc_ready = true;
-});
-*/
-
-// Listen for incoming OSC bundles.
-udpPort.on("message", function (oscMsg) {
-//    console.log("An OSC message just arrived!", oscMsg);
-    if (oscMsg.address === "/pointingInUnity") {
-        var id = oscMsg.args[0].value;
-        var tag = oscMsg.args[1].value;
-
-        console.log(id);
-        console.log(tag);
-    }
-});
-
-
-function sendTouching(remoteId, touching) {
-    var msg = {
-        //address: "/unity/touching",
-        address: "/chat",
-        args: [
-            {
-                type: "s",
-                value: remoteId.split('#')[1] // /remote#ABCD!@#$ ==> ABCD!@#$
-            },
-            {
-                type: "s", // send boolean as string
-                value: touching 
-            }
-        ]
-    };
-
-	console.log("sendTouching()");
-    udpPort.send(msg);
-}
-
-
-
-function sendPosition(remoteId, position) {
-    var msg = {
+let oscPosMessage = function(remoteId, position) {
+    var message = osc.writeMessage({
         address: "/unity/pointing",
         args: [
             {
@@ -240,10 +213,86 @@ function sendPosition(remoteId, position) {
                 value: position[1] 
             }
         ]
-    };
+    });
 
-    console.log("Sending message", msg.address, msg.args, "to", udpPort.options.remoteAddress + ":" + udpPort.options.remotePort);
-    udpPort.send(msg);
+    return Buffer.from(message)
+
 }
+
+let sendTouch = function(remoteId, touching) {
+	var m = oscTouchMessage(remoteId, touching);
+	// console.log(ab2str(m));
+  client.send(m, PORT, HOST, function(err, bytes) {
+    if(err) throw new Error(err);
+  })
+}
+
+let sendPos = function(remoteId, position) {
+  var m = oscPosMessage(remoteId, position)
+  client.send(m, PORT, HOST, function(err, bytes) {
+    if(err) throw new Error(err);
+  })
+}
+
+// Open the socket.
+udpPort.open();
+
+// Listen for incoming OSC bundles.
+udpPort.on("message", function (oscMsg) {
+//    console.log("An OSC message just arrived!", oscMsg);
+    if (oscMsg.address === "/pointingInUnity") {
+        var id = oscMsg.args[0].value;
+        var tag = oscMsg.args[1].value;
+
+        console.log(id);
+        console.log(tag);
+    }
+});
+
+
+// function sendTouching(remoteId, touching) {
+//     var msg = {
+//         //address: "/unity/touching",
+//         address: "/chat",
+//         args: [
+//             {
+//                 type: "s",
+//                 value: remoteId.split('#')[1] // /remote#ABCD!@#$ ==> ABCD!@#$
+//             },
+//             {
+//                 type: "s", // send boolean as string
+//                 value: touching 
+//             }
+//         ]
+//     };
+
+// 	console.log("sendTouching()");
+//     udpPort.send(msg);
+// }
+
+
+
+// function sendPosition(remoteId, position) {
+//     var msg = {
+//         address: "/unity/pointing",
+//         args: [
+//             {
+//                 type: "s",
+//                 value: remoteId.split('#')[1] // /remote#ABCD!@#$ ==> ABCD!@#$
+//             },
+//             {
+//                 type: "f",
+//                 value: position[0] 
+//             },
+//             {
+//                 type: "f",
+//                 value: position[1] 
+//             }
+//         ]
+//     };
+
+//     console.log("Sending message", msg.address, msg.args, "to", udpPort.options.remoteAddress + ":" + udpPort.options.remotePort);
+//     udpPort.send(msg);
+// }
 
 
