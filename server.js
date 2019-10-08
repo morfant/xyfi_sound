@@ -31,7 +31,7 @@ const client = dgram.createSocket('udp4');
 const osc = require('osc');
 
 const HOST = '183.96.170.53';
-const PORT = 57120;
+const PORT = 9001;
 //const port = 80;
 //const addr_unity = "localhost";
 const addr_unity = "183.96.170.53";
@@ -108,10 +108,9 @@ remotes.on('connection', function (remote) {
     screens.emit('pop', remote.id);
   });
 
-	
   remote.on('position', function (position) {
-    screens.emit('position', remote.id, position);
     console.log(position);
+    screens.emit('position', remote.id, position);
     sendPosition(remote.id, position); // send position data to Unity via OSC
   });
 

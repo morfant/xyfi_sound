@@ -202,9 +202,9 @@ function handleTouchEndEvent(e) {
 
 
 function update() {
-  if (buttonToggle) {
+  //if (buttonToggle) {
     io.emit('position', position);
-  }
+  //}
 }
 
 /*
