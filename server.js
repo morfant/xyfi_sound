@@ -27,7 +27,7 @@ const webpackMiddleware = require('webpack-dev-middleware');
 const webpackHotMiddleware = require('webpack-hot-middleware');
 const config = require('./webpack.config.js');
 
-const aws = false;
+const aws = true;
 const port = 443;
 
 const osc = require('osc');
@@ -51,7 +51,8 @@ const middleware = webpackMiddleware(compiler, {
 var HOST, PORT;
 
 if (aws) {
-  HOST = "183.96.170.53";
+  //HOST = "183.96.170.53"; // giy home
+  HOST = "58.229.149.145"; // jeokdo
   PORT = 9001;
 } else {
   HOST = "localhost";
