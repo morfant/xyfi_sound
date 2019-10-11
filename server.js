@@ -78,6 +78,7 @@ if (aws) {
 
 
 var remoteDevices = new Object(null);
+const timeLimit = 180; // sec
 
 
 const server = https.createServer(options, app);
@@ -137,6 +138,7 @@ String.prototype.replaceAt = function(index, replacement) {
 var screens = io.of('/screens');
 var remotes = io.of('/remotes');
 
+
 remotes.on('connection', function(remote) {
     // var _id = remote.id.split('#')[1].toString();
     var _id = remote.id.replace("/remotes#", '');
@@ -170,6 +172,8 @@ remotes.on('connection', function(remote) {
         var v = [randCol, 0];
 
         remoteDevices[_id] = v;
+
+        sendColor(remote.id, randCol) // send color via OSC to unity
     }
 
     console.log(remoteDevices)
@@ -183,11 +187,42 @@ remotes.on('connection', function(remote) {
 
 
     remote.on('position', function(position) {
-        screens.emit('position', _id, position);
+        screens.emit('position', remote.id, position);
         console.log(position);
 
         // reset timer
-        remoteDevices[_id][1] = 0; // [color, timer]
+        if (remoteDevices[_id]) {
+          remoteDevices[_id][1] = 0; // [color, timer]
+        } else {
+        if (remoteDevices[_id] == null) {
+            var _id = remote.id.replace("/remotes#", '');
+            console.log(typeof(_id)); // keep this line
+            screens.emit('push', _id);
+            console.log('remote connected');
+
+            // obj = new Object(null);
+            var randCol = randomProperty(colors);
+
+            Object.keys(remoteDevices).forEach(function(item) {
+                // console.log(item); // key
+                // console.log(remoteDevices[item]); // value
+                if (remoteDevices[item][0] === randCol) {
+                    randCol = remoteDevices[item][0];
+                    randCol.replaceAt(1 + (Math.floor(Math.random() * 6)), (Math.floor(Math.random() * 10)).toString());
+                    console.log(randCol + " / " + remoteDevices[item][0]); // TODO: check is it different
+                }
+
+            });
+
+            var v = [randCol, 0];
+
+            remoteDevices[_id] = v;
+
+            sendColor(remote.id, randCol) // send color via OSC to unity
+          }
+
+
+        }
 
         if (position.length > 0) {
             sendPos(remote.id, position) // send pos via OSC to unity
@@ -267,6 +302,33 @@ let oscPosMessage = function(remoteId, position) {
 
 }
 
+let oscColorMessage = function(remoteId, color) {
+    var message = osc.writeMessage({
+        address: "/unity/color",
+        args: [{
+                type: "s",
+                value: remoteId.split('#')[1] // /remote#ABCD!@#$ ==> ABCD!@#$
+            },
+            {
+                type: "i",
+                value: parseInt(color.substr(1, 2), 16)  // r
+            },
+            {
+                type: "i",
+                value: parseInt(color.substr(3, 2), 16)  // g
+            },
+            {
+                type: "i",
+                value: parseInt(color.substr(5, 2), 16)  // b
+            }
+            
+        ]
+    });
+
+    return Buffer.from(message)
+
+}
+
 let sendTouch = function(remoteId, touching) {
     var m = oscTouchMessage(remoteId, touching);
     // console.log(ab2str(m));
@@ -281,6 +343,14 @@ let sendPos = function(remoteId, position) {
         if (err) throw new Error(err);
     })
 }
+
+let sendColor = function(remoteId, color) {
+    var m = oscColorMessage(remoteId, color)
+    client.send(m, PORT, HOST, function(err, bytes) {
+        if (err) throw new Error(err);
+    })
+}
+
 
 // Open the socket.
 udpPort.open();
@@ -309,7 +379,23 @@ function addTimer() {
     console.log(remoteDevices);
 }
 
-setInterval(addTimer, 5000);
+setInterval(addTimer, 1000);
+
+
+function cleanZombieRemote() {
+    Object.keys(remoteDevices).forEach(function(item) {
+        // console.log(item); // key
+        // console.log(remoteDevices[item]); // value
+        if (remoteDevices[item][1] > timeLimit) {
+          delete remoteDevices[item];
+        }
+    });
+    console.log("Clear zombie!");
+    console.log(remoteDevices);
+}
+
+setInterval(cleanZombieRemote, timeLimit / 2 * 1000);
+
 
 // function sendTouching(remoteId, touching) {
 //     var msg = {
