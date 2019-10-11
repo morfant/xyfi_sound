@@ -78,7 +78,7 @@ if (aws) {
 
 
 var remoteDevices = new Object(null);
-const timeLimit = 180; // sec
+const timeLimit = 10; // sec
 
 
 const server = https.createServer(options, app);
@@ -140,7 +140,11 @@ var remotes = io.of('/remotes');
 
 
 remotes.on('connection', function(remote) {
-    // var _id = remote.id.split('#')[1].toString();
+    // var clients = io.of('/remotes').clients();
+    var clients = Object.keys(io.sockets.sockets);
+    console.log("---------------clients----------------")
+    console.log(clients)
+        // var _id = remote.id.split('#')[1].toString();
     var _id = remote.id.replace("/remotes#", '');
     console.log(typeof(_id)); // keep this line
     screens.emit('push', _id);
@@ -161,17 +165,19 @@ remotes.on('connection', function(remote) {
         Object.keys(remoteDevices).forEach(function(item) {
             // console.log(item); // key
             // console.log(remoteDevices[item]); // value
-            if (remoteDevices[item][0] === randCol) {
-                randCol = remoteDevices[item][0];
+            if (remoteDevices[item].color === randCol) {
+                randCol = remoteDevices[item].color;
                 randCol.replaceAt(1 + (Math.floor(Math.random() * 6)), (Math.floor(Math.random() * 10)).toString());
-                console.log(randCol + " / " + remoteDevices[item][0]); // TODO: check is it different
+                console.log(randCol + " / " + remoteDevices[item].color); // TODO: check is it different
             }
 
         });
 
         sendColor(_id, randCol) // send color via OSC to unity
         remote.emit('color', randCol)
-        var v = [randCol, 0];
+        var v = new Object(null)
+        v.color = randCol
+        v.timer = 0
         remoteDevices[_id] = v;
     }
 
@@ -191,34 +197,7 @@ remotes.on('connection', function(remote) {
 
         // reset timer
         if (_id in remoteDevices) {
-            remoteDevices[_id][1] = 0; // [color, timer]
-        } else {
-            console.log(typeof(_id)); // keep this line
-            screens.emit('push', _id);
-            console.log('remote connected');
-
-            // obj = new Object(null);
-            var randCol = randomProperty(colors);
-
-            Object.keys(remoteDevices).forEach(function(item) {
-                // console.log(item); // key
-                // console.log(remoteDevices[item]); // value
-                if (remoteDevices[item][0] === randCol) {
-                    randCol = remoteDevices[item][0];
-                    randCol.replaceAt(1 + (Math.floor(Math.random() * 6)), (Math.floor(Math.random() * 10)).toString());
-                    console.log(randCol + " / " + remoteDevices[item][0]); // TODO: check is it different
-                }
-
-            });
-
-            var v = [randCol, 0];
-
-            remoteDevices[_id] = v;
-
-            sendColor(_id, randCol) // send color via OSC to unity
-            remote.emit('color', randCol)
-
-
+            remoteDevices[_id].timer = 0;
         }
 
         if (position.length > 0) {
@@ -371,7 +350,7 @@ function addTimer() {
     Object.keys(remoteDevices).forEach(function(item) {
         // console.log(item); // key
         // console.log(remoteDevices[item]); // value
-        remoteDevices[item][1]++;
+        remoteDevices[item].timer++;
 
     });
     console.log(remoteDevices);
@@ -384,7 +363,9 @@ function cleanZombieRemote() {
     Object.keys(remoteDevices).forEach(function(item) {
         // console.log(item); // key
         // console.log(remoteDevices[item]); // value
-        if (remoteDevices[item][1] > timeLimit) {
+        if (remoteDevices[item].timer > timeLimit) {
+            remote.emit('disconnect')
+            io.sockets.sockets[item].disconnect(true)
             delete remoteDevices[item];
         }
     });

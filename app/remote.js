@@ -1,4 +1,3 @@
-
 /**
  * Copyright 2017 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,12 +22,12 @@ var io = require('socket.io-client')('/remotes');
 
 // The angle at which we stop listening for input from the phone's gyro.
 var MAX_X_ANGLE = 20,
-  MAX_Y_ANGLE = 24;
+    MAX_Y_ANGLE = 24;
 
 var position = [],
-  latestAlpha,
-  baseAlpha = null,
-  touching = false;
+    latestAlpha,
+    baseAlpha = null,
+    touching = false;
 
 
 var loopUpdateTimer;
@@ -93,62 +92,62 @@ gn.init().then(function(){
 // Convert the phone's gyro data into screen coordinates.
 function handleDeviceOrientation(data) {
 
-  // console.log("handleDeviceOrientation()")
-  // io.emit('llog', "hello")
+    // console.log("handleDeviceOrientation()")
+    // io.emit('llog', "hello")
 
-  var x, y,
-    alpha = latestAlpha = data.alpha,
-    beta = data.beta,
-    gamma = data.gamma,
-    abs = data.absolute;
+    var x, y,
+        alpha = latestAlpha = data.alpha,
+        beta = data.beta,
+        gamma = data.gamma,
+        abs = data.absolute;
 
-  if (baseAlpha !== null) {
-    alpha = alpha - baseAlpha;
-    alpha += 360;
-    alpha %= 360;
-  }
-
-  // Left/right rotation.
-  if (alpha > 360 - MAX_X_ANGLE) {
-
-    // phone is rotating right:
-    x = 100 / MAX_X_ANGLE * (360 - alpha);
-  } else if (alpha < MAX_X_ANGLE) {
-
-    // phone is rotating left:
-    x = 100 / MAX_X_ANGLE * (0 - alpha);
-  } else {
-
-    // Stop rotation at max angle.
-    if (alpha > MAX_X_ANGLE && alpha < 180) {
-      x = -100;
-    } else {
-      x = 100;
+    if (baseAlpha !== null) {
+        alpha = alpha - baseAlpha;
+        alpha += 360;
+        alpha %= 360;
     }
-  }
 
-  // Up/down rotation.
-  if (beta > 0 && beta <= MAX_Y_ANGLE
-    || beta < 0 && beta >= MAX_Y_ANGLE * -1) {
-    y = 100 / MAX_Y_ANGLE * (beta * -1);
-  } else {
-    if (beta > 0) {
-      y = -100;
+    // Left/right rotation.
+    if (alpha > 360 - MAX_X_ANGLE) {
+
+        // phone is rotating right:
+        x = 100 / MAX_X_ANGLE * (360 - alpha);
+    } else if (alpha < MAX_X_ANGLE) {
+
+        // phone is rotating left:
+        x = 100 / MAX_X_ANGLE * (0 - alpha);
     } else {
-      y = 100;
+
+        // Stop rotation at max angle.
+        if (alpha > MAX_X_ANGLE && alpha < 180) {
+            x = -100;
+        } else {
+            x = 100;
+        }
     }
-  }
 
-  // Normalize percentages to from (0, 100) to (0, 1):
-  x *= 0.01;
-  y *= 0.01;
+    // Up/down rotation.
+    if (beta > 0 && beta <= MAX_Y_ANGLE ||
+        beta < 0 && beta >= MAX_Y_ANGLE * -1) {
+        y = 100 / MAX_Y_ANGLE * (beta * -1);
+    } else {
+        if (beta > 0) {
+            y = -100;
+        } else {
+            y = 100;
+        }
+    }
 
-  position[0] = x;
-  position[1] = y;
-  // position[2] = alpha;
-  // position[3] = beta;
-  // position[4] = gamma;
-  // position[5] = absolute;
+    // Normalize percentages to from (0, 100) to (0, 1):
+    x *= 0.01;
+    y *= 0.01;
+
+    position[0] = x;
+    position[1] = y;
+    // position[2] = alpha;
+    // position[3] = beta;
+    // position[4] = gamma;
+    // position[5] = absolute;
 
 }
 
@@ -158,116 +157,124 @@ function handleDeviceOrientation(data) {
 
 function handleTouchStartEvent(e) {
 
-  e.preventDefault();
-  // io.emit('log', e)
+    e.preventDefault();
+    // io.emit('log', e)
 
-  baseAlpha = latestAlpha;
-  // if (e.target.id === "bigTouch") {
-    if (!touching){
-      touching = true
-      io.emit('touching', touching);
-      $('#bigTouch').addClass("touching")
-      update();
+    baseAlpha = latestAlpha;
+    // if (e.target.id === "bigTouch") {
+    if (!touching) {
+        touching = true
+        io.emit('touching', touching);
+        $('#bigTouch').addClass("touching")
+        update();
     }
-  // } 
-  // else if (e.target.id === "connect") {
-  //   if (buttonToggle === false) {
-  //     buttonToggle = true
+    // } 
+    // else if (e.target.id === "connect") {
+    //   if (buttonToggle === false) {
+    //     buttonToggle = true
 
-  //     $('#connect').removeClass("btn-primary")
-  //     $('#connect').addClass("btn-success")
-  //     $('#connect').html("Pointing On")
-  //     togglePointing()
+    //     $('#connect').removeClass("btn-primary")
+    //     $('#connect').addClass("btn-success")
+    //     $('#connect').html("Pointing On")
+    //     togglePointing()
 
-  //   } else {
-  //     buttonToggle = false
-  //     $('#connect').removeClass("btn-success")
-  //     $('#connect').addClass("btn-primary")
-  //     $('#connect').html("Connect")
+    //   } else {
+    //     buttonToggle = false
+    //     $('#connect').removeClass("btn-success")
+    //     $('#connect').addClass("btn-primary")
+    //     $('#connect').html("Connect")
 
-  //   }
-  // }
+    //   }
+    // }
 
 }
 
 function handleTouchEndEvent(e) {
-  e.preventDefault();
+    e.preventDefault();
 
-  // if (e.target.id === "bigTouch") {
+    // if (e.target.id === "bigTouch") {
     touching = false;
     io.emit('touching', touching);
     $('#bigTouch').removeClass("touching")
-  // }
+        // }
 
-  // make sound on mobile test
-  // var pos = document.getElementById("pos");
-  // pos.innerHTML = position;
+    // make sound on mobile test
+    // var pos = document.getElementById("pos");
+    // pos.innerHTML = position;
 
-  // var synth = new Tone.Synth().toMaster();
-  // synth.triggerAttackRelease(Math.abs(position[0]*500), "8n");
+    // var synth = new Tone.Synth().toMaster();
+    // synth.triggerAttackRelease(Math.abs(position[0]*500), "8n");
 }
 
 
 function update() {
-  // if (buttonToggle) {
-    if(touching) {
-      io.emit('position', position);
-      loopUpdateTimer = setTimeout(update, 15);
+    // if (buttonToggle) {
+    if (touching) {
+        io.emit('position', position);
+        loopUpdateTimer = setTimeout(update, 15);
     }
-  // }
+    // }
 }
 
-function togglePointing () {
-  baseAlpha = latestAlpha;
+function togglePointing() {
+    baseAlpha = latestAlpha;
 
-  intervalLoop = setInterval(function() {
+    intervalLoop = setInterval(function() {
 
-    update();
+        update();
 
-    if (buttonToggle == false) {
-      clearInterval(intervalLoop)
-    }
+        if (buttonToggle == false) {
+            clearInterval(intervalLoop)
+        }
 
-  }, 50); // update rate
+    }, 50); // update rate
 
 }
 
 
 
+io.on('color', setColor)
+io.on('disconnect', displayDisconnected)
+
+
+function setColor(col) { // set bg color
+    console.log(col)
+    document.body.style.background = col;
+}
+
+function displayDisconnected() {
+    document.getElementById("info").innerHTML = "Disconnected!"
+}
 
 // We need to check for DeviceOrientation support because some devices do not
 // support it. For example, phones with no gyro.
 if (window.DeviceOrientationEvent) {
 
-  // *** It needs to be worked with HTTPS(not HTTP) server to access this event on IOS ***
+    // *** It needs to be worked with HTTPS(not HTTP) server to access this event on IOS ***
 
-  window.addEventListener('deviceorientation', handleDeviceOrientation, false);
-  // window.addEventListener('deviceorientationabsolute', handleDeviceOrientation, false);
+    window.addEventListener('deviceorientation', handleDeviceOrientation, false);
+    // window.addEventListener('deviceorientationabsolute', handleDeviceOrientation, false);
 
-  window.addEventListener('touchstart', handleTouchStartEvent, {
-      capture: true,
-      passive: false
-    }
-  );
+    window.addEventListener('touchstart', handleTouchStartEvent, {
+        capture: true,
+        passive: false
+    });
 
-  window.addEventListener('mousedown', handleTouchStartEvent, {
-      capture: true,
-      passive: false
-    }
-  );
+    window.addEventListener('mousedown', handleTouchStartEvent, {
+        capture: true,
+        passive: false
+    });
 
-  window.addEventListener('touchend', handleTouchEndEvent, {
-      capture: true,
-      passive: false
-    }
-  );
+    window.addEventListener('touchend', handleTouchEndEvent, {
+        capture: true,
+        passive: false
+    });
 
-  window.addEventListener('mouseup', handleTouchEndEvent, {
-      capture: true,
-      passive: false
-    }
-  );
+    window.addEventListener('mouseup', handleTouchEndEvent, {
+        capture: true,
+        passive: false
+    });
 
 } else {
-  alert('This device is not supported.');
+    alert('This device is not supported.');
 }
