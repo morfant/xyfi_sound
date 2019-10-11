@@ -78,7 +78,7 @@ if (aws) {
 
 
 var remoteDevices = new Object(null);
-const timeLimit = 10; // sec
+const timeLimit = 60; // sec
 
 
 const server = https.createServer(options, app);
@@ -173,7 +173,6 @@ remotes.on('connection', function(remote) {
 
         });
 
-        sendColor(_id, randCol) // send color via OSC to unity
         remote.emit('color', randCol)
         var v = new Object(null)
         v.color = randCol
@@ -186,6 +185,7 @@ remotes.on('connection', function(remote) {
     remote.once('disconnect', function() {
         console.log('remote disconnected');
         screens.emit('pop', _id);
+        sendTouch(_id, false); // send pos via OSC to unity
         delete remoteDevices[_id];
         console.log(remoteDevices)
     });
@@ -198,18 +198,22 @@ remotes.on('connection', function(remote) {
         // reset timer
         if (_id in remoteDevices) {
             remoteDevices[_id].timer = 0;
-        }
 
-        if (position.length > 0) {
-            sendPos(_id, position) // send pos via OSC to unity
-        } else {
-            console.log("position array is EMPTY!");
+            if (position.length > 0) {
+                sendPos(_id, position) // send pos via OSC to unity
+            } else {
+                console.log("position array is EMPTY!");
+            }
         }
     });
 
     remote.on('touching', function(touching) {
         console.log(touching);
         sendTouch(_id, touching); // send pos via OSC to unity
+
+        if (touching) {
+            sendColor(_id, remoteDevices[_id].color)
+        }
     });
 
     // remote.on('log', function(str) {
@@ -280,23 +284,30 @@ let oscPosMessage = function(remoteId, position) {
 }
 
 let oscColorMessage = function(remoteId, color) {
+
+    var r = (parseInt(color.substr(1, 2), 16)) / 256 // r
+    var g = (parseInt(color.substr(3, 2), 16)) / 256 // r
+    var b = (parseInt(color.substr(5, 2), 16)) / 256 // r
+
+    console.log(r + " / " + g + " / " + b)
+
     var message = osc.writeMessage({
-        address: "/unity/color",
+        address: "/unity/coloring",
         args: [{
                 type: "s",
                 value: remoteId
             },
             {
                 type: "f",
-                value: parseInt(color.substr(1, 2), 16) / 256 // r
+                value: r
             },
             {
                 type: "f",
-                value: parseInt(color.substr(3, 2), 16) / 256 // g
+                value: g
             },
             {
                 type: "f",
-                value: parseInt(color.substr(5, 2), 16) / 256 // b
+                value: b
             }
 
         ]
@@ -360,11 +371,14 @@ setInterval(addTimer, 1000);
 
 
 function cleanZombieRemote() {
+    if (Object.keys(remoteDevices).length == 0) { return; }
+
     Object.keys(remoteDevices).forEach(function(item) {
         // console.log(item); // key
         // console.log(remoteDevices[item]); // value
         if (remoteDevices[item].timer > timeLimit) {
-            remote.emit('disconnect')
+            io.sockets.sockets[item].emit('disconnect')
+                // remote.emit('disconnect')
             io.sockets.sockets[item].disconnect(true)
             delete remoteDevices[item];
         }
