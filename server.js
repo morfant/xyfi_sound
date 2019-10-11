@@ -135,8 +135,8 @@ remotes.on('connection', function (remote) {
 
   remote.once('disconnect', function () {
     console.log('remote disconnected');
-    screens.emit('pop', remote.id);
-    arrayRemove(remoteDevices, remote.id)
+    screens.emit('pop', remote.id); // screens uses remote.id (not _id)
+    delete remoteDevices._id;
     console.log(remoteDevices)
   });
 
