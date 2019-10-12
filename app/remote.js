@@ -33,6 +33,7 @@ var position = [],
 var loopUpdateTimer;
 var buttonToggle = false;
 var intervalLoop = null;
+var isFirstTime = true;
 
 // Using gyronorm if you need
 /*
@@ -155,6 +156,9 @@ function handleDeviceOrientation(data) {
 //   io.emit('log', data)
 // }
 
+
+
+
 function handleTouchStartEvent(e) {
 
     e.preventDefault();
@@ -204,6 +208,26 @@ function handleTouchEndEvent(e) {
 
     // var synth = new Tone.Synth().toMaster();
     // synth.triggerAttackRelease(Math.abs(position[0]*500), "8n");
+
+
+    // for ios 13+
+    if (isFirstTime) {
+        if (typeof DeviceMotionEvent.requestPermission === 'function') {
+            // alert('정상작동을 위해 장치의 움직임 권한에 대한 접근 \'허용\'이 필요합니다');
+
+            window.DeviceMotionEvent.requestPermission()
+                .then(response => {
+                    if (response == 'granted') {
+                        // permission granted
+                    } else {
+                        // permission not granted
+                        alert('\'Settings -> Safari -> Advanced -> Website data -> Edit -> hidden-protocol.xyz 삭제\' 후 페이지를 다시 로드해 주세요');
+                        displayNeedPermission();
+                    }
+                })
+        }
+        isFirstTime = false
+    }
 }
 
 
@@ -216,23 +240,23 @@ function update() {
     // }
 }
 
-function togglePointing() {
-    baseAlpha = latestAlpha;
+// function togglePointing() {
+//     baseAlpha = latestAlpha;
 
-    intervalLoop = setInterval(function() {
+//     intervalLoop = setInterval(function() {
 
-        update();
+//         update();
 
-        if (buttonToggle == false) {
-            clearInterval(intervalLoop)
-        }
+//         if (buttonToggle == false) {
+//             clearInterval(intervalLoop)
+//         }
 
-    }, 50); // update rate
+//     }, 50); // update rate
 
-}
+// }
 
 
-
+/********************** socket callback ************************/
 io.on('color', setColor)
 io.on('disconnect', displayDisconnected)
 
@@ -246,9 +270,19 @@ function displayDisconnected() {
     document.getElementById("info").innerHTML = "Disconnected!"
 }
 
+
+function displayNeedPermission() {
+    document.getElementById("info").innerHTML = "Need to allowed a DeviceMotion permission access"
+}
+
+
+
+
+/********************** device orientation ************************/
 // We need to check for DeviceOrientation support because some devices do not
 // support it. For example, phones with no gyro.
 if (window.DeviceOrientationEvent) {
+    // alert("DeviceOrientationEvent()")
 
     // *** It needs to be worked with HTTPS(not HTTP) server to access this event on IOS ***
 
