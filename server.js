@@ -149,6 +149,8 @@ remotes.on('connection', function(remote) {
     console.log(typeof(_id)); // keep this line
     screens.emit('push', _id);
     console.log('remote connected');
+    remotes.emit('reconnect');
+    remotes.emit('setTouching', false);
 
     /*
     {
@@ -198,7 +200,6 @@ remotes.on('connection', function(remote) {
         // reset timer
         if (_id in remoteDevices) {
             remoteDevices[_id].timer = 0;
-
             if (position.length > 0) {
                 sendPos(_id, position) // send pos via OSC to unity
             } else {
@@ -210,6 +211,7 @@ remotes.on('connection', function(remote) {
     remote.on('touching', function(touching) {
         console.log(touching);
         sendTouch(_id, touching); // send pos via OSC to unity
+        remoteDevices[_id].isTouching = touching;
 
         if (touching) {
             sendColor(_id, remoteDevices[_id].color)
@@ -361,10 +363,12 @@ function addTimer() {
     Object.keys(remoteDevices).forEach(function(item) {
         // console.log(item); // key
         // console.log(remoteDevices[item]); // value
-        remoteDevices[item].timer++;
+        if (!remoteDevices[item].isTouching) {
+            remoteDevices[item].timer++;
+            console.log(remoteDevices);
+        }
 
     });
-    console.log(remoteDevices);
 }
 
 setInterval(addTimer, 1000);

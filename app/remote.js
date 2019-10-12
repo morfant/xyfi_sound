@@ -258,7 +258,9 @@ function update() {
 
 /********************** socket callback ************************/
 io.on('color', setColor)
+io.on('reconnect', displayConnected)
 io.on('disconnect', displayDisconnected)
+io.on('setTouching', setTouching)
 
 
 function setColor(col) { // set bg color
@@ -266,14 +268,24 @@ function setColor(col) { // set bg color
     document.body.style.background = col;
 }
 
+function displayConnected() {
+    document.getElementById("info").innerHTML = "Point at center of screen, hold and interact"
+}
+
 function displayDisconnected() {
     document.getElementById("info").innerHTML = "Disconnected!"
 }
 
-
 function displayNeedPermission() {
     document.getElementById("info").innerHTML = "Need to allowed a DeviceMotion permission access"
 }
+
+function setTouching(b) {
+    console.log(b)
+    touching = b;
+}
+
+
 
 
 
