@@ -78,7 +78,7 @@ if (aws) {
 
 
 var remoteDevices = new Object(null);
-const timeLimit = 60; // sec
+const timeLimit = 60 * 5; // sec
 
 
 const server = https.createServer(options, app);
