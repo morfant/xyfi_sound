@@ -54,7 +54,9 @@ var HOST, PORT;
 
 if (aws) {
  //   HOST = "58.229.149.145"; // jeokdo
-    HOST = "183.96.170.53"; // giy home
+    //HOST = "183.96.170.53"; // giy home
+    HOST = "210.94.143.30"; // PAL_studio
+    PORT = 9001;
 } else {
     HOST = "localhost";
     PORT = 9001;
@@ -141,7 +143,7 @@ remotes.on('connection', function(remote) {
     // var _id = remote.id.split('#')[1].toString();
     var _id = remote.id.replace("/remotes#", '');
     console.log(typeof(_id)); // keep this line
-    screens.emit('push', _id);
+    screens.emit('push', remote.id);
     console.log('remote connected');
 
     /*
@@ -177,13 +179,14 @@ remotes.on('connection', function(remote) {
     remote.once('disconnect', function() {
         console.log('remote disconnected');
         screens.emit('pop', remote.id);
-        arrayRemove(remoteDevices, remote.id)
+        //arrayRemove(remoteDevices, remote.id)
+	delete remoteDevices[_id];
         console.log(remoteDevices)
     });
 
 
     remote.on('position', function(position) {
-        screens.emit('position', _id, position);
+        screens.emit('position', remote.id, position);
         console.log(position);
 
         // reset timer
