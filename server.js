@@ -80,6 +80,7 @@ if (aws) {
 
 
 var remoteDevices = new Object(null);
+const timeLimit = 60 * 5; // sec
 
 
 const server = https.createServer(options, app);
@@ -139,12 +140,19 @@ String.prototype.replaceAt = function(index, replacement) {
 var screens = io.of('/screens');
 var remotes = io.of('/remotes');
 
+
 remotes.on('connection', function(remote) {
-    // var _id = remote.id.split('#')[1].toString();
+    // var clients = io.of('/remotes').clients();
+    var clients = Object.keys(io.sockets.sockets);
+    console.log("---------------clients----------------")
+    console.log(clients)
+        // var _id = remote.id.split('#')[1].toString();
     var _id = remote.id.replace("/remotes#", '');
     console.log(typeof(_id)); // keep this line
     screens.emit('push', remote.id);
     console.log('remote connected');
+    remotes.emit('reconnect');
+    remotes.emit('setTouching', false);
 
     /*
     {
@@ -161,16 +169,18 @@ remotes.on('connection', function(remote) {
         Object.keys(remoteDevices).forEach(function(item) {
             // console.log(item); // key
             // console.log(remoteDevices[item]); // value
-            if (remoteDevices[item][0] === randCol) {
-                randCol = remoteDevices[item][0];
+            if (remoteDevices[item].color === randCol) {
+                randCol = remoteDevices[item].color;
                 randCol.replaceAt(1 + (Math.floor(Math.random() * 6)), (Math.floor(Math.random() * 10)).toString());
-                console.log(randCol + " / " + remoteDevices[item][0]); // TODO: check is it different
+                console.log(randCol + " / " + remoteDevices[item].color); // TODO: check is it different
             }
 
         });
 
-        var v = [randCol, 0];
-
+        remote.emit('color', randCol)
+        var v = new Object(null)
+        v.color = randCol
+        v.timer = 0
         remoteDevices[_id] = v;
     }
 
@@ -178,9 +188,9 @@ remotes.on('connection', function(remote) {
 
     remote.once('disconnect', function() {
         console.log('remote disconnected');
-        screens.emit('pop', remote.id);
-        //arrayRemove(remoteDevices, remote.id)
-	delete remoteDevices[_id];
+        screens.emit('pop', _id);
+        sendTouch(_id, false); // send pos via OSC to unity
+        delete remoteDevices[_id];
         console.log(remoteDevices)
     });
 
@@ -190,18 +200,24 @@ remotes.on('connection', function(remote) {
         console.log(position);
 
         // reset timer
-        remoteDevices[_id][1] = 0; // [color, timer]
-
-        if (position.length > 0) {
-            sendPos(remote.id, position) // send pos via OSC to unity
-        } else {
-            console.log("position array is EMPTY!");
+        if (_id in remoteDevices) {
+            remoteDevices[_id].timer = 0;
+            if (position.length > 0) {
+                sendPos(_id, position) // send pos via OSC to unity
+            } else {
+                console.log("position array is EMPTY!");
+            }
         }
     });
 
     remote.on('touching', function(touching) {
         console.log(touching);
-        sendTouch(remote.id, touching); // send pos via OSC to unity
+        sendTouch(_id, touching); // send pos via OSC to unity
+        remoteDevices[_id].isTouching = touching;
+
+        if (touching) {
+            sendColor(_id, remoteDevices[_id].color)
+        }
     });
 
     // remote.on('log', function(str) {
@@ -236,7 +252,7 @@ let oscTouchMessage = function(remoteId, touching) {
         address: '/unity/touching',
         args: [{
                 type: "s",
-                value: remoteId.split('#')[1] // /remote#ABCD!@#$ ==> ABCD!@#$
+                value: remoteId
             },
             {
                 type: "s", // send boolean as string
@@ -253,7 +269,8 @@ let oscPosMessage = function(remoteId, position) {
         address: "/unity/pointing",
         args: [{
                 type: "s",
-                value: remoteId.split('#')[1] // /remote#ABCD!@#$ ==> ABCD!@#$
+                // value: remoteId.split('#')[1] // /remote#ABCD!@#$ ==> ABCD!@#$
+                value: remoteId
             },
             {
                 type: "f",
@@ -263,6 +280,40 @@ let oscPosMessage = function(remoteId, position) {
                 type: "f",
                 value: position[1]
             }
+        ]
+    });
+
+    return Buffer.from(message)
+
+}
+
+let oscColorMessage = function(remoteId, color) {
+
+    var r = (parseInt(color.substr(1, 2), 16)) / 256 // r
+    var g = (parseInt(color.substr(3, 2), 16)) / 256 // r
+    var b = (parseInt(color.substr(5, 2), 16)) / 256 // r
+
+    console.log(r + " / " + g + " / " + b)
+
+    var message = osc.writeMessage({
+        address: "/unity/coloring",
+        args: [{
+                type: "s",
+                value: remoteId
+            },
+            {
+                type: "f",
+                value: r
+            },
+            {
+                type: "f",
+                value: g
+            },
+            {
+                type: "f",
+                value: b
+            }
+
         ]
     });
 
@@ -285,6 +336,14 @@ let sendPos = function(remoteId, position) {
     })
 }
 
+let sendColor = function(remoteId, color) {
+    var m = oscColorMessage(remoteId, color)
+    client.send(m, PORT, HOST, function(err, bytes) {
+        if (err) throw new Error(err);
+    })
+}
+
+
 // Open the socket.
 udpPort.open();
 
@@ -306,55 +365,32 @@ function addTimer() {
     Object.keys(remoteDevices).forEach(function(item) {
         // console.log(item); // key
         // console.log(remoteDevices[item]); // value
-        remoteDevices[item][1]++;
+        if (!remoteDevices[item].isTouching) {
+            remoteDevices[item].timer++;
+            console.log(remoteDevices);
+        }
 
     });
+}
+
+setInterval(addTimer, 1000);
+
+
+function cleanZombieRemote() {
+    if (Object.keys(remoteDevices).length == 0) { return; }
+
+    Object.keys(remoteDevices).forEach(function(item) {
+        // console.log(item); // key
+        // console.log(remoteDevices[item]); // value
+        if (remoteDevices[item].timer > timeLimit) {
+            io.sockets.sockets[item].emit('disconnect')
+                // remote.emit('disconnect')
+            io.sockets.sockets[item].disconnect(true)
+            delete remoteDevices[item];
+        }
+    });
+    console.log("Clear zombie!");
     console.log(remoteDevices);
 }
 
-setInterval(addTimer, 5000);
-
-// function sendTouching(remoteId, touching) {
-//     var msg = {
-//         //address: "/unity/touching",
-//         address: "/chat",
-//         args: [
-//             {
-//                 type: "s",
-//                 value: remoteId.split('#')[1] // /remote#ABCD!@#$ ==> ABCD!@#$
-//             },
-//             {
-//                 type: "s", // send boolean as string
-//                 value: touching 
-//             }
-//         ]
-//     };
-
-// 	console.log("sendTouching()");
-//     udpPort.send(msg);
-// }
-
-
-
-// function sendPosition(remoteId, position) {
-//     var msg = {
-//         address: "/unity/pointing",
-//         args: [
-//             {
-//                 type: "s",
-//                 value: remoteId.split('#')[1] // /remote#ABCD!@#$ ==> ABCD!@#$
-//             },
-//             {
-//                 type: "f",
-//                 value: position[0] 
-//             },
-//             {
-//                 type: "f",
-//                 value: position[1] 
-//             }
-//         ]
-//     };
-
-//     console.log("Sending message", msg.address, msg.args, "to", udpPort.options.remoteAddress + ":" + udpPort.options.remotePort);
-//     udpPort.send(msg);
-// }
+setInterval(cleanZombieRemote, timeLimit / 2 * 1000);

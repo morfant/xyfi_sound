@@ -45,3 +45,7 @@ body {
 .touching {
   background: var(--touchColor)
 }
+
+.bgimg {
+    /* background-image: url('../back.png'); */
+}
