@@ -85,6 +85,8 @@ const server = https.createServer(options, app);
 const io = require('socket.io')(server);
 
 
+app.use(express.static('./public'))
+
 app.use(middleware);
 app.use(webpackHotMiddleware(compiler));
 

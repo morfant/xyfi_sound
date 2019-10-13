@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "ajv": "^6.10.0",
+    "animate.css": "^3.7.2",
     "arraybuffer-to-string": "^1.0.2",
     "osc": "2.3.0",
     "socket.io": "^2.0.3",
