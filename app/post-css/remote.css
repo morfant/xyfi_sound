@@ -97,12 +97,12 @@ body {
 .outer {
   animation: bounceInUp 4s;
   /* animation-delay: .5s; */
-  width: 200px;
-  height: 200px;
+  width: 180px;
+  height: 180px;
   margin: 10px auto;
   position:relative;
   border-radius: 110px;
-  border: solid 1px #ffffff;
+  border: solid 4px #ffffff;
   margin-top: 28%;
   margin-bottom: 5%;
 }
@@ -133,7 +133,7 @@ transform:rotate(180deg);
 height: 220px;
   top: 0;
 } */
-.ring {
+/* .ring {
   position: absolute;
   top:-57px;
   width: 198px;
@@ -142,7 +142,7 @@ height: 220px;
   border-radius: 120px;
   
 
-}
+} */
 
 /* .outer:active .ring {
   top: 0px;
