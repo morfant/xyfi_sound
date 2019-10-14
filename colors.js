@@ -106,7 +106,7 @@ const colors = {
     "paleturquoise": "#afeeee",
     "palevioletred": "#d87093",
     // "papayawhip": "#ffefd5",
-    "peachpuff": "#ffdab9",?
+    "peachpuff": "#ffdab9",
     "peru": "#cd853f",
     "pink": "#ffc0cb",
     "plum": "#dda0dd",
