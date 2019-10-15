@@ -14,10 +14,12 @@
  */
 
 /* cssnext: CSS variables */
-:root {
+/* :root {
   --mainColor: #292929;
   --touchColor: cadetblue;
-}
+
+} */
+
 
 html, body {
   background: var(--mainColor);
@@ -84,9 +86,11 @@ body {
 .hp__notice{
   text-align: center;
   margin-top: 10%; 
+  margin-left: 10%;
+  margin-right: 10%;
   word-break: keep-all;
   color: #ffffff;
-  font-size: 30px;
+  font-size: 29px;
 }
 
 
