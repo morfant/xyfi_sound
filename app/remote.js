@@ -297,11 +297,11 @@ function displayConnected() {
 }
 
 function displayDisconnected() {
-    document.getElementById("info").innerHTML = "Disconnected!"
+    document.getElementById("info_2").innerHTML = "Disconnected!"
 }
 
 function displayNeedPermission() {
-    document.getElementById("info").innerHTML = "Need to allowed a DeviceMotion permission access"
+    document.getElementById("info_2").innerHTML = "Need to allowed a DeviceMotion permission access"
 }
 
 function setTouching(b) {

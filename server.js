@@ -68,9 +68,9 @@ var options = {};
 
 if (aws) {
     options = {
-        key: fs.readFileSync('/etc/letsencrypt/live/hidden-protocol.xyz/privkey.pem'),
-        cert: fs.readFileSync('/etc/letsencrypt/live/hidden-protocol.xyz/cert.pem'),
-        ca: fs.readFileSync('/etc/letsencrypt/live/hidden-protocol.xyz/chain.pem')
+        key: fs.readFileSync('/etc/letsencrypt/live/pal9000.space/privkey.pem'),
+        cert: fs.readFileSync('/etc/letsencrypt/live/pal9000.space/cert.pem'),
+        ca: fs.readFileSync('/etc/letsencrypt/live/pal9000.space/chain.pem')
     }
 } else {
     options = {
@@ -81,7 +81,7 @@ if (aws) {
 
 
 var remoteDevices = new Object(null);
-const timeLimit = 60 * 5; // sec
+const timeLimit = 60; // sec
 
 
 const server = https.createServer(options, app);
