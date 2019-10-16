@@ -297,12 +297,20 @@ function displayConnected() {
 }
 
 function displayDisconnected() {
+<<<<<<< HEAD
     document.getElementById("info_2").innerHTML = "연결이 끊어졌습니다! 새로고침 해주세요."
     console.log("disconnect!!!!!")
 }
 
 function displayNeedPermission() {
     // document.getElementById("info").innerHTML = "Need to allowed a DeviceMotion permission access"
+=======
+    document.getElementById("info_2").innerHTML = "Disconnected!"
+}
+
+function displayNeedPermission() {
+    document.getElementById("info_2").innerHTML = "Need to allowed a DeviceMotion permission access"
+>>>>>>> 37e77387df523320469c6321244aef70eb9ec0fa
 }
 
 function setTouching(b) {

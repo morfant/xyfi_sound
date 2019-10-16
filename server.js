@@ -27,8 +27,8 @@ const webpackMiddleware = require('webpack-dev-middleware');
 const webpackHotMiddleware = require('webpack-hot-middleware');
 const config = require('./webpack.config.js');
 
-const aws = false;
-const port = 443;
+const aws = true;
+const port = 443;   
 
 const osc = require('osc');
 const dgram = require('dgram');
@@ -53,7 +53,10 @@ const { colors } = require('./colors.js');
 var HOST, PORT;
 
 if (aws) {
-    HOST = "183.96.170.53";
+ //   HOST = "58.229.149.145"; // jeokdo
+    //HOST = "183.96.170.53"; // giy home
+    HOST = "210.94.143.30"; // PAL_studio
+  //HOST = "10.160.87.177";
     PORT = 9001;
 } else {
     HOST = "localhost";
@@ -65,9 +68,9 @@ var options = {};
 
 if (aws) {
     options = {
-        key: fs.readFileSync('/etc/letsencrypt/live/hidden-protocol.xyz/privkey.pem'),
-        cert: fs.readFileSync('/etc/letsencrypt/live/hidden-protocol.xyz/cert.pem'),
-        ca: fs.readFileSync('/etc/letsencrypt/live/hidden-protocol.xyz/chain.pem')
+        key: fs.readFileSync('/etc/letsencrypt/live/pal9000.space/privkey.pem'),
+        cert: fs.readFileSync('/etc/letsencrypt/live/pal9000.space/cert.pem'),
+        ca: fs.readFileSync('/etc/letsencrypt/live/pal9000.space/chain.pem')
     }
 } else {
     options = {
@@ -78,7 +81,7 @@ if (aws) {
 
 
 var remoteDevices = new Object(null);
-const timeLimit = 60 * 5; // sec
+const timeLimit = 60; // sec
 
 
 const server = https.createServer(options, app);
@@ -149,7 +152,7 @@ remotes.on('connection', function(remote) {
         // var _id = remote.id.split('#')[1].toString();
     var _id = remote.id.replace("/remotes#", '');
     console.log(typeof(_id)); // keep this line
-    screens.emit('push', _id);
+    screens.emit('push', remote.id);
     console.log('remote connected');
     remotes.emit('reconnect');
     remotes.emit('setTouching', false);
@@ -196,7 +199,7 @@ remotes.on('connection', function(remote) {
 
 
     remote.on('position', function(position) {
-        screens.emit('position', _id, position);
+        screens.emit('position', remote.id, position);
         console.log(position);
 
         // reset timer
