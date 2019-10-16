@@ -44,6 +44,7 @@ body {
   }
 }
 
+
 .touching {
   background: var(--touchColor)
 }
@@ -93,9 +94,15 @@ body {
   font-size: 29px;
 }
 
-
-
-
+#info_2{
+  text-align: center;
+  margin-top: 10%; 
+  margin-left: 10%;
+  margin-right: 10%;
+  word-break: keep-all;
+  color: #ffffff;
+  font-size: 29px;
+}
 
 
 .outer {
