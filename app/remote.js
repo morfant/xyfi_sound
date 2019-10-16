@@ -235,7 +235,7 @@ function update() {
     // if (buttonToggle) {
     if (touching) {
         io.emit('position', position);
-        loopUpdateTimer = setTimeout(update, 15);
+        loopUpdateTimer = setTimeout(update, 15);        
     }
     // }
 }
@@ -265,11 +265,35 @@ io.on('setTouching', setTouching)
 
 function setColor(col) { // set bg color
     console.log(col)
-    document.body.style.background = col;
+    // if(touching) {
+    //     document.body.style.background = col;
+
+    // }
+    // var body = document.querySelectorAll('body')
+
+    // body.addEventListener("setColor", col => {
+    //     body.setProperty('--touchColor', col)
+    // });
+    document.body.style.setProperty('--mainColor', '#292929');
+    document.body.style.setProperty('--touchColor', col);
+
+
 }
 
+// document.documentElement.style.setProperty('--mainColor', '#ff4545');
+
+
 function displayConnected() {
-    document.getElementById("info").innerHTML = "Point at center of screen, hold and interact"
+    // document.getElementById("info").innerHTML = "Point at center of screen, hold and interact"
+    // animateCSS('.my-element', 'fadeInDown')
+
+    const element =  document.querySelector(".hp__title")
+    element.classList.add('animated', 'fadeInDown')
+    element.addEventListener('animationend', function() {document.getElementById("info_2",'animated', 'fadeInDown').innerHTML = "스크린 중앙을 향해 화면을 터치한 상태로 컨트롤하세요."})
+
+    // var video = document.getElementById("hpVideo");
+    // document.documentElement.style.setProperty('--mainColor', '#ff4545');
+
 }
 
 function displayDisconnected() {
