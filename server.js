@@ -27,8 +27,8 @@ const webpackMiddleware = require('webpack-dev-middleware');
 const webpackHotMiddleware = require('webpack-hot-middleware');
 const config = require('./webpack.config.js');
 
-const aws = true;
-const port = 443;   
+const aws = false;
+const port = 443;
 
 const osc = require('osc');
 const dgram = require('dgram');
@@ -53,10 +53,10 @@ const { colors } = require('./colors.js');
 var HOST, PORT;
 
 if (aws) {
- //   HOST = "58.229.149.145"; // jeokdo
+    //   HOST = "58.229.149.145"; // jeokdo
     //HOST = "183.96.170.53"; // giy home
     HOST = "210.94.143.30"; // PAL_studio
-  //HOST = "10.160.87.177";
+    //HOST = "10.160.87.177";
     PORT = 9001;
 } else {
     HOST = "localhost";
